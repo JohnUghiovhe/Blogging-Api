@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Signup Page</title>
+  </head>
+  <body>
+  <% if (typeof error !== 'undefined' && error) { %>
+  <p style="color:red"><%= error %></p>
+  <% } %>
+
+    <style>form{max-width:520px;margin:16px auto;padding:12px;border:1px solid #ddd}label{display:block;margin:8px 0}</style>
+    <form id="signupForm" action="/api/auth/signup" method="post">
+      <label>First name
+        <input type="text" name="first_name" placeholder="First name" required />
+      </label>
+      <label>Last name
+        <input type="text" name="last_name" placeholder="Last name" required />
+      </label>
+      <label>Email
+        <input type="email" name="email" placeholder="Email" required />
+      </label>
+      <label>Password
+        <input type="password" name="password" placeholder="Password" required />
+      </label>
+      <div style="margin-top:12px">
+        <button type="submit">Signup</button> <a href="/signin">Signin</a>
+      </div>
+      <p id="msg" style="color:red"></p>
+    </form>
+
+    <script>
+      document.getElementById('signupForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const f = e.target;
+        const payload = {
+          first_name: f.first_name.value.trim(),
+          last_name: f.last_name.value.trim(),
+          email: f.email.value.trim(),
+          password: f.password.value
+        };
+        if (!payload.first_name || !payload.last_name || !payload.email || !payload.password) {
+          document.getElementById('msg').textContent = 'All fields are required';
+          return;
+        }
+
+        try {
+          const res = await fetch(f.action, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || 'Signup failed');
+          document.cookie = `token=${data.token}; path=/; max-age=${60*60};`;
+          localStorage.setItem('token', data.token);
+          location.href = '/blogs';
+        } catch (err) {
+          document.getElementById('msg').textContent = err.message;
+        }
+      });
+    </script>
+  </body>
+</html>

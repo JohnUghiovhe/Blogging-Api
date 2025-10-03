@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Signin Page</title>
+  </head>
+  <body>
+    <style>form{max-width:420px;margin:24px auto;padding:16px;border:1px solid #ddd}label{display:block;margin:8px 0}</style>
+    <form id="signinForm" action="/api/auth/signin" method="post">
+      <label>Email
+        <input type="email" name="email" placeholder="Email" required />
+      </label>
+      <label>Password
+        <input type="password" name="password" placeholder="Password" required />
+      </label>
+      <div style="margin-top:12px">
+        <button type="submit">Login</button>
+        <a href="/signup" style="margin-left:12px">Signup</a>
+      </div>
+      <p id="msg" style="color:red"></p>
+    </form>
+
+    <script>
+      // client-side signin: submit via fetch, store token in cookie & localStorage
+      document.getElementById('signinForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const form = e.target;
+        const email = form.email.value.trim();
+        const password = form.password.value;
+        if (!email || !password) {
+          document.getElementById('msg').textContent = 'Email and password are required';
+          return;
+        }
+
+        try {
+          const res = await fetch(form.action, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || 'Signin failed');
+
+          // store token: cookie (httpOnly unavailable from client), so use cookie for convenience
+          document.cookie = `token=${data.token}; path=/; max-age=${60*60};`;
+          localStorage.setItem('token', data.token);
+          // redirect to home or my blogs
+          location.href = '/blogs';
+        } catch (err) {
+          document.getElementById('msg').textContent = err.message;
+        }
+      });
+    </script>
+  </body>
+</html>

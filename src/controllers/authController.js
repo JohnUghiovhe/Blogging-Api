@@ -2,6 +2,10 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
+const index = (req, res) => {
+    res.send('Auth Controller is working');
+}
+
 const signUp = async (req, res) => {
     try {
         const { first_name, last_name, email, password } = req.body;

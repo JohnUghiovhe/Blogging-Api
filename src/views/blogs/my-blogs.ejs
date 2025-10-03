@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Blogs</title>
+</head>
+<body>
+  <a href="/blogs">Back to blogs</a>
+  <h1>My Blogs</h1>
+  <div id="list">Loading...</div>
+
+  <script>
+    async function load() {
+      try {
+        const headers = {};
+        const token = localStorage.getItem('token');
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        const res = await fetch('/api/blogs/my-blogs', { headers });
+        if (!res.ok) throw new Error('Failed to load your blogs');
+        const data = await res.json();
+        const container = document.getElementById('list');
+        if (!data.blogs || data.blogs.length === 0) {
+          container.innerHTML = '<p>No blogs found.</p>';
+          return;
+        }
+        container.innerHTML = data.blogs.map(b => `
+          <div>
+            <h3>${b.title} <small>(${b.state})</small></h3>
+            <a href="/blogs/${b._id}">View</a> |
+            <a href="/blogs/${b._id}/edit">Edit</a> |
+            <button data-id="${b._id}" class="publish">${b.state==='draft'?'Publish':'Unpublish'}</button>
+            <button data-id="${b._id}" class="delete">Delete</button>
+          </div>
+        `).join('');
+      } catch (err) {
+        document.getElementById('list').textContent = err.message;
+      }
+    }
+    load();
+    document.addEventListener('click', async (e) => {
+      if (e.target.classList.contains('publish')) {
+        const id = e.target.dataset.id;
+        const newState = e.target.textContent === 'Publish' ? 'published' : 'draft';
+        try {
+          const res = await fetch('/api/blogs/' + id + '/state', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') }, body: JSON.stringify({ state: newState }) });
+          if (!res.ok) throw new Error('Failed to change state');
+          load();
+        } catch (err) { alert(err.message); }
+      }
+      if (e.target.classList.contains('delete')) {
+        const id = e.target.dataset.id;
+        if (!confirm('Delete?')) return;
+        try {
+          const res = await fetch('/api/blogs/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') } });
+          if (!res.ok) throw new Error('Failed to delete');
+          load();
+        } catch (err) { alert(err.message); }
+      }
+    });
+  </script>
+</body>
+</html>

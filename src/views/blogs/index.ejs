@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blogs</title>
+  <style>article{border:1px solid #ddd;padding:12px;margin:8px 0}</style>
+</head>
+<body>
+  <h1>Published Blogs</h1>
+  <nav>
+    <a href="/">Home</a> |
+    <a href="/signin">Sign in</a> |
+    <a href="/signup">Sign up</a> |
+    <a href="/blogs/new">Create new blog</a> |
+    <a href="/blogs/my-blogs">My blogs</a>
+  </nav>
+
+  <section id="blogs">Loading...</section>
+
+  <script>
+    async function load() {
+      try {
+        const headers = {};
+        const token = localStorage.getItem('token');
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        const res = await fetch('/api/blogs', { headers });
+        if (!res.ok) throw new Error('Failed to load blogs');
+        const data = await res.json();
+        const container = document.getElementById('blogs');
+        if (!data.blogs || data.blogs.length === 0) {
+          container.innerHTML = '<p>No published blogs found.</p>';
+          return;
+        }
+        // expose current user id from server-side (available via viewAuth middleware)
+  const currentUserId = "<%= currentUser ? currentUser.id : '' %>";
+        container.innerHTML = data.blogs.map(b => {
+          const authorId = b.author && (b.author._id || b.author.id || '');
+          const isOwner = currentUserId && authorId && String(currentUserId) === String(authorId);
+          return `
+          <article>
+            <h2><a href="/blogs/${b._id}">${b.title}</a></h2>
+            <p>${b.description || ''}</p>
+            <small>By: ${b.author?.first_name || ''} ${b.author?.last_name || ''} — ${new Date(b.timestamp).toLocaleString()}</small>
+            ${isOwner ? `<div><a href="/blogs/${b._id}/edit">Edit</a></div>` : ''}
+          </article>
+          `;
+        }).join('');
+      } catch (err) {
+        document.getElementById('blogs').textContent = err.message;
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

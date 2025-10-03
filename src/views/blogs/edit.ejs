@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edit Blog</title>
+</head>
+<body>
+  <a href="/blogs">Back</a>
+  <h1>Edit blog</h1>
+  <form id="edit">
+    <p>Title</p>
+    <input name="title" required />
+    <p>Description</p>
+    <input name="description" />
+    <p>Tags (comma separated)</p>
+    <input name="tags" />
+    <p>Body</p>
+    <textarea name="body" required></textarea>
+    <br />
+    <button type="submit">Save</button>
+  </form>
+  <div id="msg"></div>
+
+  <script>
+    const id = location.pathname.split('/').pop();
+    async function load() {
+    try {
+      const headers = {};
+      const token = localStorage.getItem('token');
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      const res = await fetch('/api/blogs/' + id, { headers });
+        if (!res.ok) throw new Error('Blog not found');
+        const blog = await res.json();
+        document.querySelector('[name=title]').value = blog.title;
+        document.querySelector('[name=description]').value = blog.description || '';
+        document.querySelector('[name=tags]').value = (blog.tags || []).join(',');
+        document.querySelector('[name=body]').value = blog.body;
+      } catch (err) {
+        document.getElementById('msg').textContent = err.message;
+      }
+    }
+    load();
+
+    document.getElementById('edit').addEventListener('submit', async e => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const payload = {
+        title: fd.get('title'),
+        description: fd.get('description'),
+        tags: fd.get('tags') ? fd.get('tags').split(',').map(s=>s.trim()) : [],
+        body: fd.get('body')
+      };
+
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) throw new Error('You must be signed in to edit this blog');
+        const res = await fetch('/api/blogs/' + id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Failed');
+        document.getElementById('msg').textContent = 'Saved';
+        location.href = '/blogs/' + id;
+      } catch (err) {
+        document.getElementById('msg').textContent = err.message;
+      }
+    });
+  </script>
+</body>
+</html>
