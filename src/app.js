@@ -8,6 +8,16 @@ const viewAuth = require('./middleware/viewAuth');
 const connectDB = require('./config/db');
 require('dotenv').config();
 
+// Global error handlers to capture unexpected crashes and log stacks
+process.on('unhandledRejection', (reason, p) => {
+    console.error('Unhandled Rejection at:', p, 'reason:', reason && reason.stack ? reason.stack : reason);
+});
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception thrown:', err && err.stack ? err.stack : err);
+    // exit after logging so that the supervising process (nodemon) can restart
+    process.exit(1);
+});
+
 const app = express();
 
 // Connect to MongoDB (Model)
@@ -36,6 +46,27 @@ app.use('/api/blogs', blogRoutes);
 app.get('/', (req, res) => res.render('users/index'));
 app.get('/signin', (req, res) => res.render('users/signin', { error: null }));
 app.get('/signup', (req, res) => res.render('users/signup', { error: null }));
+
+// Blog pages (rendered views)
+app.get('/blogs', (req, res) => {
+    return res.render('blogs/index');
+});
+
+app.get('/blogs/new', (req, res) => {
+    return res.render('blogs/new');
+});
+
+app.get('/blogs/my-blogs', (req, res) => {
+    return res.render('blogs/my-blogs');
+});
+
+app.get('/blogs/:id/edit', (req, res) => {
+    return res.render('blogs/edit');
+});
+
+app.get('/blogs/:id', (req, res) => {
+    return res.render('blogs/show');
+});
 
 // Error handling (View for errors)
 app.use(errorHandler);
