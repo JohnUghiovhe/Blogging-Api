@@ -11,8 +11,9 @@
   <p style="color:red"><%= error %></p>
   <% } %>
 
-    <style>form{max-width:520px;margin:16px auto;padding:12px;border:1px solid #ddd}label{display:block;margin:8px 0}</style>
-    <form id="signupForm" action="/api/auth/signup" method="post">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <div class="container">
+    <form id="signupForm" action="/api/auth/signup" method="post" class="card">
       <label>First name
         <input type="text" name="first_name" placeholder="First name" required />
       </label>
@@ -29,7 +30,8 @@
         <button type="submit">Signup</button> <a href="/signin">Signin</a>
       </div>
       <p id="msg" style="color:red"></p>
-    </form>
+  </form>
+  </div>
 
     <script>
       document.getElementById('signupForm').addEventListener('submit', async e => {

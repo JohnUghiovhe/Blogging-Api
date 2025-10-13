@@ -25,6 +25,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // expose current user to views (parses token from cookie)
 app.use(viewAuth);
 
+// Serve static assets
+app.use('/static', express.static(path.join(__dirname, 'public')));
+
 // Routes (Controller)
 app.use('/api/auth', authRoutes);
 app.use('/api/blogs', blogRoutes);

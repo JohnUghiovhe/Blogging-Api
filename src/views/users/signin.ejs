@@ -7,8 +7,9 @@
     <title>Signin Page</title>
   </head>
   <body>
-    <style>form{max-width:420px;margin:24px auto;padding:16px;border:1px solid #ddd}label{display:block;margin:8px 0}</style>
-    <form id="signinForm" action="/api/auth/signin" method="post">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <div class="container">
+      <form id="signinForm" action="/api/auth/signin" method="post" class="card">
       <label>Email
         <input type="email" name="email" placeholder="Email" required />
       </label>
@@ -22,7 +23,9 @@
       <p id="msg" style="color:red"></p>
     </form>
 
-    <script>
+  </form>
+  </div>
+  <script>
       // client-side signin: submit via fetch, store token in cookie & localStorage
       document.getElementById('signinForm').addEventListener('submit', async e => {
         e.preventDefault();

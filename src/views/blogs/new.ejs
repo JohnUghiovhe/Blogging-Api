@@ -4,11 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Create Blog</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-  <a href="/blogs">Back</a>
-  <h1>Create a new blog</h1>
-  <form id="create">
+  <div class="container">
+    <a href="/blogs">Back</a>
+    <h1>Create a new blog</h1>
+    <form id="create" class="card">
     <p>Title</p>
     <input name="title" required />
     <p>Description</p>
@@ -20,7 +22,8 @@
     <br />
     <button type="submit">Create</button>
   </form>
-  <div id="msg"></div>
+    <div id="msg"></div>
+  </div>
 
   <script>
     document.getElementById('create').addEventListener('submit', async e => {
