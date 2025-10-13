@@ -15,10 +15,7 @@
     async function load() {
       const id = location.pathname.split('/').pop();
       try {
-        const headers = {};
-        const token = localStorage.getItem('token');
-        if (token) headers['Authorization'] = 'Bearer ' + token;
-        const res = await fetch('/api/blogs/' + id, { headers });
+  const res = await fetch('/api/blogs/' + id, { credentials: 'include' });
         if (!res.ok) throw new Error('Blog not found');
         const blog = await res.json();
         const currentUserId = "<%= currentUser ? currentUser.id : '' %>";
@@ -36,7 +33,7 @@
         if (isOwner) {
           document.getElementById('publishBtn').addEventListener('click', async () => {
             try {
-              const resp = await fetch('/api/blogs/' + id + '/state', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') }, body: JSON.stringify({ state: 'published' }) });
+              const resp = await fetch('/api/blogs/' + id + '/state', { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ state: 'published' }) });
               if (!resp.ok) throw new Error('Failed to publish');
               alert('Published');
               location.reload();
@@ -46,7 +43,7 @@
           document.getElementById('deleteBtn').addEventListener('click', async () => {
             if (!confirm('Delete this blog?')) return;
             try {
-              const resp = await fetch('/api/blogs/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') } });
+              const resp = await fetch('/api/blogs/' + id, { method: 'DELETE', credentials: 'include' });
               if (!resp.ok) throw new Error('Failed to delete');
               alert('Deleted');
               location.href = '/blogs';

@@ -36,6 +36,13 @@ const signUp = async (req, res) => {
             { expiresIn: '1h' }
         );
 
+        // Set httpOnly cookie and return user info (do not send token in body)
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 1000 // 1 hour
+        });
         res.status(201).json({
             message: 'User created successfully',
             token,
@@ -75,6 +82,13 @@ const signIn = async (req, res) => {
             { expiresIn: '1h' }
         );
 
+        // Set httpOnly cookie and return user info
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 1000 // 1 hour
+        });
         res.status(200).json({
             message: 'Login successful',
             token,
@@ -91,7 +105,27 @@ const signIn = async (req, res) => {
     }
 };
 
+const logout = (req, res) => {
+    res.clearCookie('token', { path: '/' });
+    res.json({ message: 'Logged out' });
+};
+
+const me = async (req, res) => {
+    try {
+        if (!req.user || !req.user.id) return res.status(401).json({ message: 'Not authenticated' });
+        const user = await require('../models/user').findById(req.user.id).select('-password');
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        res.json({ user });
+    } catch (err) {
+        console.error('Me Error:', err);
+        res.status(500).json({ message: 'Error retrieving user' });
+    }
+};
+
 module.exports = { 
     signUp,
-    signIn 
+    signIn,
+    logout,
+    me
 };
+

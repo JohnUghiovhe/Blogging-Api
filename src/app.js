@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const authRoutes = require('./routes/authRoutes');
 const blogRoutes = require('./routes/blogRoutes');
 const errorHandler = require('./middleware/errorHandler');
+const cookieParser = require('cookie-parser');
 const viewAuth = require('./middleware/viewAuth');
 const connectDB = require('./config/db');
 require('dotenv').config();
@@ -33,6 +34,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // expose current user to views (parses token from cookie)
+app.use(cookieParser());
 app.use(viewAuth);
 
 // Serve static assets

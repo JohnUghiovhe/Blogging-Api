@@ -14,6 +14,7 @@
         <a href="/">Home</a>
         <a href="/blogs/new">Create new</a>
         <a href="/blogs/my-blogs">My blogs</a>
+        <button style="margin-left:12px" onclick="logout()">Logout</button>
       </nav>
     </div>
 
@@ -22,10 +23,7 @@
   <script>
     async function load() {
       try {
-        const headers = {};
-        const token = localStorage.getItem('token');
-        if (token) headers['Authorization'] = 'Bearer ' + token;
-        const res = await fetch('/api/blogs', { headers });
+  const res = await fetch('/api/blogs', { credentials: 'include' });
         if (!res.ok) throw new Error('Failed to load blogs');
         const data = await res.json();
         const container = document.getElementById('blogs');
@@ -52,6 +50,13 @@
       }
     }
     load();
+  </script>
+  <script>
+    async function logout(){
+      try{ await fetch('/api/auth/logout', { method: 'GET', credentials: 'include' }); }catch(e){}
+      localStorage.removeItem('token');
+      location.href = '/';
+    }
   </script>
 </body>
 </html>

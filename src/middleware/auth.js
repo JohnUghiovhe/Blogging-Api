@@ -2,7 +2,11 @@ const jwt = require('jsonwebtoken');
 
 // Middleware to authenticate user using JWT
 const authMiddleware = (req, res, next) => {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
+    // Support token via Authorization header (Bearer) or httpOnly cookie named 'token'
+    let token = null;
+    const header = req.header('Authorization');
+    if (header && header.startsWith('Bearer ')) token = header.replace('Bearer ', '');
+    if (!token && req.cookies && req.cookies.token) token = req.cookies.token;
 
     if (!token) {
         return res.status(401).json({ message: 'Access denied. No token provided.' });

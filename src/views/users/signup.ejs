@@ -51,13 +51,13 @@
         try {
           const res = await fetch(f.action, {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
           const data = await res.json();
           if (!res.ok) throw new Error(data.message || 'Signup failed');
-          document.cookie = `token=${data.token}; path=/; max-age=${60*60};`;
-          localStorage.setItem('token', data.token);
+          // token is set by server in an httpOnly cookie
           location.href = '/blogs';
         } catch (err) {
           document.getElementById('msg').textContent = err.message;

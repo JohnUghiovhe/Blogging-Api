@@ -39,18 +39,15 @@
 
         try {
           const res = await fetch(form.action, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.message || 'Signin failed');
-
-          // store token: cookie (httpOnly unavailable from client), so use cookie for convenience
-          document.cookie = `token=${data.token}; path=/; max-age=${60*60};`;
-          localStorage.setItem('token', data.token);
-          // redirect to home or my blogs
-          location.href = '/blogs';
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'Signin failed');
+            // server-set httpOnly cookie contains token; no localStorage token storage
+            location.href = '/blogs';
         } catch (err) {
           document.getElementById('msg').textContent = err.message;
         }

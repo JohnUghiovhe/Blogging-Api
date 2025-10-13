@@ -28,10 +28,7 @@
     const id = location.pathname.split('/').pop();
     async function load() {
     try {
-      const headers = {};
-      const token = localStorage.getItem('token');
-      if (token) headers['Authorization'] = 'Bearer ' + token;
-      const res = await fetch('/api/blogs/' + id, { headers });
+  const res = await fetch('/api/blogs/' + id, { credentials: 'include' });
         if (!res.ok) throw new Error('Blog not found');
         const blog = await res.json();
         document.querySelector('[name=title]').value = blog.title;
@@ -55,11 +52,10 @@
       };
 
       try {
-        const token = localStorage.getItem('token');
-        if (!token) throw new Error('You must be signed in to edit this blog');
         const res = await fetch('/api/blogs/' + id, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
         const data = await res.json();

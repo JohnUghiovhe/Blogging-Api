@@ -15,10 +15,7 @@
   <script>
     async function load() {
       try {
-        const headers = {};
-        const token = localStorage.getItem('token');
-        if (token) headers['Authorization'] = 'Bearer ' + token;
-        const res = await fetch('/api/blogs/my-blogs', { headers });
+  const res = await fetch('/api/blogs/my-blogs', { credentials: 'include' });
         if (!res.ok) throw new Error('Failed to load your blogs');
         const data = await res.json();
         const container = document.getElementById('list');
@@ -40,12 +37,12 @@
       }
     }
     load();
-    document.addEventListener('click', async (e) => {
+        document.addEventListener('click', async (e) => {
       if (e.target.classList.contains('publish')) {
         const id = e.target.dataset.id;
         const newState = e.target.textContent === 'Publish' ? 'published' : 'draft';
         try {
-          const res = await fetch('/api/blogs/' + id + '/state', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') }, body: JSON.stringify({ state: newState }) });
+          const res = await fetch('/api/blogs/' + id + '/state', { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ state: newState }) });
           if (!res.ok) throw new Error('Failed to change state');
           load();
         } catch (err) { alert(err.message); }
@@ -54,7 +51,7 @@
         const id = e.target.dataset.id;
         if (!confirm('Delete?')) return;
         try {
-          const res = await fetch('/api/blogs/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') } });
+          const res = await fetch('/api/blogs/' + id, { method: 'DELETE', credentials: 'include' });
           if (!res.ok) throw new Error('Failed to delete');
           load();
         } catch (err) { alert(err.message); }
