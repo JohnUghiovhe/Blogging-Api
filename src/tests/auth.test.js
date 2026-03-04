@@ -4,10 +4,7 @@ const User = require('../models/user');
 const mongoose = require('mongoose');
 
 beforeAll(async () => {
-    await mongoose.connect(process.env.MONGODB_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true
-    });
+    await mongoose.connect(process.env.MONGODB_URI);
 });
 
 afterAll(async () => {

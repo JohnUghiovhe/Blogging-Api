@@ -12,7 +12,7 @@ describe('Blog API', () => {
     let blog; // Add this variable to store the created blog
 
     beforeAll(async () => {
-        await mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+        await mongoose.connect(process.env.MONGODB_URI);
 
         // Hash password before creating user
         const hashedPassword = await bcrypt.hash('password123', 10);
