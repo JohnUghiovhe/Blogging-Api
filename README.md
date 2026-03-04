@@ -1,19 +1,7 @@
-# Blogging API (Upgraded)
+# Blogging API
 
 A full-stack blogging application built with Node.js, Express, MongoDB, EJS, and JWT-based authentication.
-
-The project now includes a major UI refresh and expanded functionality for discovery, content management, and analytics.
-
-## What’s New
-
-### Massive UI Upgrade
-- Modern responsive design system (cards, dashboards, badges, toolbar actions, status messages)
-- Improved authentication pages and home page
-- Rebuilt blog views for:
-  - public discovery
-  - blog detail + related posts
-  - create/edit workflows
-  - author dashboard with quick actions
+The project includes a major UI refresh and expanded functionality for discovery, content management, and analytics.
 
 ### Massive Functionality Upgrade
 - Advanced published blog filtering:
