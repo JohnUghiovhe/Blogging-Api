@@ -184,17 +184,27 @@ exports.getBlogById = async (req, res) => {
         blog.read_count += 1;
         await blog.save();
 
-        const relatedBlogs = await Blog.find({
-            _id: { $ne: blog._id },
-            state: 'published',
-            $or: [
-                { tags: { $in: blog.tags || [] } },
-                { author: blog.author._id }
-            ]
-        })
-            .populate('author', 'first_name last_name email')
-            .sort({ timestamp: -1 })
-            .limit(4);
+        const relatedConditions = [];
+        if (Array.isArray(blog.tags) && blog.tags.length > 0) {
+            relatedConditions.push({ tags: { $in: blog.tags } });
+        }
+
+        const authorId = blog.author && blog.author._id ? blog.author._id : blog.author;
+        if (authorId) {
+            relatedConditions.push({ author: authorId });
+        }
+
+        let relatedBlogs = [];
+        if (relatedConditions.length > 0) {
+            relatedBlogs = await Blog.find({
+                _id: { $ne: blog._id },
+                state: 'published',
+                $or: relatedConditions
+            })
+                .populate('author', 'first_name last_name email')
+                .sort({ timestamp: -1 })
+                .limit(4);
+        }
 
         const blogData = blog.toObject();
         res.status(200).json({
@@ -402,17 +412,14 @@ exports.updateBlogState = async (req, res) => {
         res.status(500).json({ message: 'Error updating blog state', error: error.message });
     }
 };
-
-
-const blogController = {
+module.exports = {
     getPublishedBlogs: exports.getPublishedBlogs,
+    getBlogHighlights: exports.getBlogHighlights,
+    getBlogs: exports.getBlogs,
+    getBlogById: exports.getBlogById,
+    getMyBlogs: exports.getMyBlogs,
     createBlog: exports.createBlog,
     updateBlog: exports.updateBlog,
     deleteBlog: exports.deleteBlog,
-    getBlogById: exports.getBlogById,
-    getMyBlogs: exports.getMyBlogs,
-    updateBlogState: exports.updateBlogState,
-    calculateReadingTime: exports.calculateReadingTime
-};      
-
-module.exports = blogController;
+    updateBlogState: exports.updateBlogState
+};
