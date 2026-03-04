@@ -7,51 +7,82 @@
   <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-  <div class="container">
-    <a href="/blogs">Back</a>
-    <h1>Edit blog</h1>
-    <form id="edit" class="card">
-    <p>Title</p>
-    <input name="title" required />
-    <p>Description</p>
-    <input name="description" />
-    <p>Tags (comma separated)</p>
-    <input name="tags" />
-    <p>Body</p>
-    <textarea name="body" required></textarea>
-    <br />
-    <button type="submit">Save</button>
-  </form>
-  <div id="msg"></div>
+  <div class="container shell">
+    <header class="topbar">
+      <div>
+        <h1 class="title">Edit Blog</h1>
+        <p class="subtitle">Update your content and publishing state.</p>
+      </div>
+      <nav class="nav">
+        <a class="btn ghost" id="viewLink" href="/blogs">View Blog</a>
+        <a class="btn ghost" href="/blogs/my-blogs">My Blogs</a>
+      </nav>
+    </header>
 
+    <form id="edit" class="card">
+      <label>Title
+        <input name="title" maxlength="120" required />
+      </label>
+      <label>Description
+        <input name="description" maxlength="240" />
+      </label>
+      <div class="row">
+        <label>Tags (comma separated)
+          <input name="tags" />
+        </label>
+        <label>State
+          <select name="state">
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+          </select>
+        </label>
+      </div>
+      <label>Body
+        <textarea name="body" required></textarea>
+      </label>
+      <div class="toolbar">
+        <button type="submit">Save Changes</button>
+        <a class="btn secondary" id="cancelLink" href="/blogs">Cancel</a>
+      </div>
+      <p id="msg"></p>
+    </form>
+  </div>
+
+  <script src="/static/js/app.js"></script>
   <script>
-    const id = location.pathname.split('/').pop();
+    const id = location.pathname.split('/')[2];
+    document.getElementById('viewLink').href = '/blogs/' + id;
+    document.getElementById('cancelLink').href = '/blogs/' + id;
+
     async function load() {
-    try {
-  const res = await fetch('/api/blogs/' + id, { credentials: 'include' });
+      try {
+        const res = await fetch('/api/blogs/' + id, { credentials: 'include' });
         if (!res.ok) throw new Error('Blog not found');
         const blog = await res.json();
         document.querySelector('[name=title]').value = blog.title;
         document.querySelector('[name=description]').value = blog.description || '';
         document.querySelector('[name=tags]').value = (blog.tags || []).join(',');
         document.querySelector('[name=body]').value = blog.body;
+        document.querySelector('[name=state]').value = blog.state || 'draft';
       } catch (err) {
-        document.getElementById('msg').textContent = err.message;
+        appUtils.showMessage('msg', err.message, 'error');
       }
     }
     load();
 
-    document.getElementById('edit').addEventListener('submit', async e => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
+    document.getElementById('edit').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const fd = new FormData(event.target);
       const payload = {
         title: fd.get('title'),
         description: fd.get('description'),
         tags: fd.get('tags') ? fd.get('tags').split(',').map(s=>s.trim()) : [],
-        body: fd.get('body')
+        body: fd.get('body'),
+        state: fd.get('state')
       };
 
       try {
+        appUtils.clearMessage('msg');
         const res = await fetch('/api/blogs/' + id, {
           method: 'PUT',
           credentials: 'include',
@@ -60,10 +91,10 @@
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Failed');
-        document.getElementById('msg').textContent = 'Saved';
+        appUtils.showMessage('msg', 'Changes saved successfully', 'success');
         location.href = '/blogs/' + id;
       } catch (err) {
-        document.getElementById('msg').textContent = err.message;
+        appUtils.showMessage('msg', err.message, 'error');
       }
     });
   </script>

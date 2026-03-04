@@ -7,56 +7,194 @@
   <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-  <div class="container">
-    <a href="/blogs">Back to blogs</a>
-    <h1>My Blogs</h1>
-    <div id="list">Loading...</div>
+  <div class="container shell">
+    <header class="topbar">
+      <div>
+        <h1 class="title">My Blogs Dashboard</h1>
+        <p class="subtitle">Monitor your drafts and published stories in one place.</p>
+      </div>
+      <nav class="nav">
+        <a class="btn ghost" href="/blogs">Published Blogs</a>
+        <a class="btn" href="/blogs/new">Create Blog</a>
+        <button class="btn secondary" onclick="appUtils.logout()">Logout</button>
+      </nav>
+    </header>
 
+    <section class="stats">
+      <div class="stat"><p class="muted">Total Blogs</p><p class="value" id="sTotal">0</p></div>
+      <div class="stat"><p class="muted">Drafts</p><p class="value" id="sDraft">0</p></div>
+      <div class="stat"><p class="muted">Published</p><p class="value" id="sPublished">0</p></div>
+      <div class="stat"><p class="muted">Current Page</p><p class="value" id="sPage">1</p></div>
+    </section>
+
+    <section class="card">
+      <form id="controls">
+        <div class="row">
+          <label>Filter by state
+            <select name="state">
+              <option value="">All</option>
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+            </select>
+          </label>
+          <label>Order by
+            <select name="orderBy">
+              <option value="timestamp">Date</option>
+              <option value="read_count">Reads</option>
+              <option value="reading_time">Reading time</option>
+              <option value="state">State</option>
+            </select>
+          </label>
+          <label>Order
+            <select name="order">
+              <option value="desc">Descending</option>
+              <option value="asc">Ascending</option>
+            </select>
+          </label>
+          <label>Limit
+            <select name="limit">
+              <option value="10">10</option>
+              <option value="20" selected>20</option>
+              <option value="30">30</option>
+            </select>
+          </label>
+        </div>
+        <div class="toolbar">
+          <button type="submit">Apply</button>
+          <button type="button" class="btn ghost" id="reset">Reset</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="list" class="blog-list"></section>
+    <div id="pager" class="pager" style="display:none">
+      <button class="btn ghost" id="prevPage">Previous</button>
+      <p id="pageText" class="muted"></p>
+      <button class="btn ghost" id="nextPage">Next</button>
+    </div>
+    <p id="msg"></p>
+  </div>
+
+  <script src="/static/js/app.js"></script>
   <script>
-    async function load() {
+    let currentPage = 1;
+    let pagination = null;
+
+    function updateStats(summary, pageInfo) {
+      document.getElementById('sTotal').textContent = summary.totalBlogs;
+      document.getElementById('sDraft').textContent = summary.draftBlogs;
+      document.getElementById('sPublished').textContent = summary.publishedBlogs;
+      document.getElementById('sPage').textContent = pageInfo.currentPage;
+    }
+
+    async function load(page) {
       try {
-  const res = await fetch('/api/blogs/my-blogs', { credentials: 'include' });
-        if (!res.ok) throw new Error('Failed to load your blogs');
-        const data = await res.json();
-        const container = document.getElementById('list');
-        if (!data.blogs || data.blogs.length === 0) {
-          container.innerHTML = '<p>No blogs found.</p>';
-          return;
+        appUtils.clearMessage('msg');
+        const params = new URLSearchParams();
+        params.set('page', String(page));
+        const formData = new FormData(document.getElementById('controls'));
+        for (const [key, value] of formData.entries()) {
+          if (value) params.set(key, value);
         }
-        container.innerHTML = data.blogs.map(b => `
-          <div>
-            <h3>${b.title} <small>(${b.state})</small></h3>
-            <a href="/blogs/${b._id}">View</a> |
-            <a href="/blogs/${b._id}/edit">Edit</a> |
-            <button data-id="${b._id}" class="publish">${b.state==='draft'?'Publish':'Unpublish'}</button>
-            <button data-id="${b._id}" class="delete">Delete</button>
-          </div>
-        `).join('');
-      } catch (err) {
-        document.getElementById('list').textContent = err.message;
+
+        const response = await fetch(`/api/blogs/my-blogs?${params.toString()}`, { credentials: 'include' });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Failed to load your blogs');
+
+        currentPage = data.pagination.currentPage;
+        pagination = data.pagination;
+        updateStats(data.summary, data.pagination);
+
+        const container = document.getElementById('list');
+        if (!data.blogs.length) {
+          container.innerHTML = '<p class="muted">No blogs found for selected filters.</p>';
+        } else {
+          container.innerHTML = data.blogs.map((blog) => `
+            <article class="blog-item">
+              <h3>${blog.title}</h3>
+              <p class="muted">${blog.description || 'No description provided.'}</p>
+              <div class="blog-meta">
+                <span>${blog.state}</span>
+                <span>${blog.read_count} reads</span>
+                <span>${blog.reading_time || 'Quick read'}</span>
+                <span>${new Date(blog.timestamp).toLocaleString()}</span>
+              </div>
+              <div class="toolbar">
+                <a class="btn ghost" href="/blogs/${blog._id}">View</a>
+                <a class="btn ghost" href="/blogs/${blog._id}/edit">Edit</a>
+                <button class="btn secondary publish" data-id="${blog._id}" data-state="${blog.state}">${blog.state === 'draft' ? 'Publish' : 'Move to Draft'}</button>
+                <button class="btn danger delete" data-id="${blog._id}">Delete</button>
+              </div>
+            </article>
+          `).join('');
+        }
+
+        document.getElementById('pager').style.display = 'flex';
+        document.getElementById('pageText').textContent = `Page ${data.pagination.currentPage} of ${data.pagination.totalPages || 1}`;
+        document.getElementById('prevPage').disabled = !data.pagination.hasPrevPage;
+        document.getElementById('nextPage').disabled = !data.pagination.hasNextPage;
+      } catch (error) {
+        appUtils.showMessage('msg', error.message, 'error');
       }
     }
-    load();
-        document.addEventListener('click', async (e) => {
-      if (e.target.classList.contains('publish')) {
-        const id = e.target.dataset.id;
-        const newState = e.target.textContent === 'Publish' ? 'published' : 'draft';
+
+    document.getElementById('controls').addEventListener('submit', (event) => {
+      event.preventDefault();
+      load(1);
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      document.getElementById('controls').reset();
+      load(1);
+    });
+
+    document.getElementById('prevPage').addEventListener('click', () => {
+      if (pagination && pagination.hasPrevPage) load(currentPage - 1);
+    });
+
+    document.getElementById('nextPage').addEventListener('click', () => {
+      if (pagination && pagination.hasNextPage) load(currentPage + 1);
+    });
+
+    document.addEventListener('click', async (event) => {
+      if (event.target.classList.contains('publish')) {
+        const id = event.target.dataset.id;
+        const currentState = event.target.dataset.state;
+        const nextState = currentState === 'draft' ? 'published' : 'draft';
         try {
-          const res = await fetch('/api/blogs/' + id + '/state', { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ state: newState }) });
-          if (!res.ok) throw new Error('Failed to change state');
-          load();
-        } catch (err) { alert(err.message); }
+          const response = await fetch(`/api/blogs/${id}/state`, {
+            method: 'PATCH',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ state: nextState })
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || 'Failed to update state');
+          appUtils.showMessage('msg', data.message || 'State updated successfully', 'success');
+          load(currentPage);
+        } catch (error) {
+          appUtils.showMessage('msg', error.message, 'error');
+        }
       }
-      if (e.target.classList.contains('delete')) {
-        const id = e.target.dataset.id;
-        if (!confirm('Delete?')) return;
+
+      if (event.target.classList.contains('delete')) {
+        const id = event.target.dataset.id;
+        if (!window.confirm('Delete this blog permanently?')) return;
         try {
-          const res = await fetch('/api/blogs/' + id, { method: 'DELETE', credentials: 'include' });
-          if (!res.ok) throw new Error('Failed to delete');
-          load();
-        } catch (err) { alert(err.message); }
+          const response = await fetch(`/api/blogs/${id}`, { method: 'DELETE', credentials: 'include' });
+          if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.message || 'Failed to delete blog');
+          }
+          appUtils.showMessage('msg', 'Blog deleted successfully', 'success');
+          load(currentPage);
+        } catch (error) {
+          appUtils.showMessage('msg', error.message, 'error');
+        }
       }
     });
+
+    load(1);
   </script>
 </body>
 </html>

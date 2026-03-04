@@ -2,6 +2,17 @@ const Blog = require('../models/blog');
 const User = require('../models/user');
 const { calculateReadingTime } = require('../utils/readingTime');
 
+const normalizeTags = (tags) => {
+    if (!tags) return [];
+    if (Array.isArray(tags)) {
+        return tags.map((tag) => String(tag).trim()).filter(Boolean);
+    }
+    return String(tags)
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter(Boolean);
+};
+
 exports.getPublishedBlogs = async (req, res) => {
     try {
         // Pagination
@@ -37,6 +48,19 @@ exports.getPublishedBlogs = async (req, res) => {
             searchQuery.tags = { $in: tagsArray };
         }
 
+        if (req.query.q) {
+            searchQuery.$or = [
+                { title: { $regex: req.query.q, $options: 'i' } },
+                { description: { $regex: req.query.q, $options: 'i' } },
+                { body: { $regex: req.query.q, $options: 'i' } },
+                { tags: { $regex: req.query.q, $options: 'i' } }
+            ];
+        }
+
+        if (req.query.minReadCount) {
+            searchQuery.read_count = { $gte: Number(req.query.minReadCount) || 0 };
+        }
+
         // Sorting
         let sortOptions = {};
         if (req.query.orderBy) {
@@ -66,6 +90,14 @@ exports.getPublishedBlogs = async (req, res) => {
 
         res.status(200).json({
             blogs,
+            filters: {
+                author: req.query.author || null,
+                title: req.query.title || null,
+                tags: req.query.tags || null,
+                q: req.query.q || null,
+                orderBy: req.query.orderBy || 'timestamp',
+                order: req.query.order || 'desc'
+            },
             pagination: {
                 currentPage: page,
                 totalPages,
@@ -78,6 +110,44 @@ exports.getPublishedBlogs = async (req, res) => {
     } catch (error) {
         console.error('Get Published Blogs Error:', error);
         res.status(500).json({ message: 'Error retrieving blogs', error: error.message });
+    }
+};
+
+exports.getBlogHighlights = async (req, res) => {
+    try {
+        const [trendingBlogs, latestBlogs, publishedCount, draftCount, tagsAgg] = await Promise.all([
+            Blog.find({ state: 'published' })
+                .populate('author', 'first_name last_name email')
+                .sort({ read_count: -1, timestamp: -1 })
+                .limit(5),
+            Blog.find({ state: 'published' })
+                .populate('author', 'first_name last_name email')
+                .sort({ timestamp: -1 })
+                .limit(5),
+            Blog.countDocuments({ state: 'published' }),
+            Blog.countDocuments({ state: 'draft' }),
+            Blog.aggregate([
+                { $match: { state: 'published' } },
+                { $unwind: '$tags' },
+                { $group: { _id: { $toLower: '$tags' }, count: { $sum: 1 } } },
+                { $sort: { count: -1, _id: 1 } },
+                { $limit: 10 }
+            ])
+        ]);
+
+        res.status(200).json({
+            trendingBlogs,
+            latestBlogs,
+            topTags: tagsAgg.map((item) => ({ tag: item._id, count: item.count })),
+            stats: {
+                publishedCount,
+                draftCount,
+                totalCount: publishedCount + draftCount
+            }
+        });
+    } catch (error) {
+        console.error('Get Blog Highlights Error:', error);
+        res.status(500).json({ message: 'Error retrieving blog highlights', error: error.message });
     }
 };
 
@@ -114,7 +184,23 @@ exports.getBlogById = async (req, res) => {
         blog.read_count += 1;
         await blog.save();
 
-        res.status(200).json(blog);
+        const relatedBlogs = await Blog.find({
+            _id: { $ne: blog._id },
+            state: 'published',
+            $or: [
+                { tags: { $in: blog.tags || [] } },
+                { author: blog.author._id }
+            ]
+        })
+            .populate('author', 'first_name last_name email')
+            .sort({ timestamp: -1 })
+            .limit(4);
+
+        const blogData = blog.toObject();
+        res.status(200).json({
+            ...blogData,
+            relatedBlogs
+        });
     } catch (error) {
         res.status(500).json({ message: 'Error retrieving blog', error: error.message });
     }
@@ -192,7 +278,7 @@ exports.getMyBlogs = async (req, res) => {
 
 exports.createBlog = async (req, res) => {
     try {
-        const { title, description, tags, body } = req.body;
+        const { title, description, tags, body, state } = req.body;
         const author = req.user.id;
 
         if (!title || !body) {
@@ -210,10 +296,10 @@ exports.createBlog = async (req, res) => {
         const newBlog = new Blog({
             title,
             description,
-            tags,
+            tags: normalizeTags(tags),
             body,
             author,
-            state: 'draft', // Blog starts in draft state
+            state: state === 'published' ? 'published' : 'draft',
             read_count: 0,
             reading_time,
             timestamp: new Date()
@@ -250,7 +336,7 @@ exports.updateBlog = async (req, res) => {
         
         // Update other fields
         if (description !== undefined) blog.description = description;
-        if (tags !== undefined) blog.tags = tags;
+        if (tags !== undefined) blog.tags = normalizeTags(tags);
         if (body !== undefined) {
             blog.body = body;
             blog.reading_time = calculateReadingTime(body);

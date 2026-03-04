@@ -7,53 +7,108 @@
   <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-  <div class="container">
-    <a href="/blogs">Back to blogs</a>
-    <div id="blog" class="card">Loading...</div>
+  <div class="container shell">
+    <header class="topbar">
+      <nav class="nav">
+        <a class="btn ghost" href="/blogs">Back to Blogs</a>
+        <a class="btn ghost" href="/blogs/my-blogs">My Blogs</a>
+      </nav>
+      <% if (currentUser) { %>
+        <button class="btn secondary" onclick="appUtils.logout()">Logout</button>
+      <% } %>
+    </header>
 
+    <article id="blog" class="card">Loading blog...</article>
+    <section class="card">
+      <h3>Related Posts</h3>
+      <div id="related" class="blog-list"></div>
+    </section>
+    <p id="msg"></p>
+  </div>
+
+  <script src="/static/js/app.js"></script>
   <script>
     async function load() {
       const id = location.pathname.split('/').pop();
+      const currentUserId = "<%= currentUser ? currentUser.id : '' %>";
+
       try {
-  const res = await fetch('/api/blogs/' + id, { credentials: 'include' });
-        if (!res.ok) throw new Error('Blog not found');
-        const blog = await res.json();
-        const currentUserId = "<%= currentUser ? currentUser.id : '' %>";
+        const response = await fetch(`/api/blogs/${id}`, { credentials: 'include' });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Blog not found');
+
+        const blog = data;
         const authorId = blog.author && (blog.author._id || blog.author.id || '');
         const isOwner = currentUserId && authorId && String(currentUserId) === String(authorId);
 
+        const tags = (blog.tags || []).map((tag) => `<span class="tag">${tag}</span>`).join('');
         document.getElementById('blog').innerHTML = `
           <h1>${blog.title}</h1>
-          <p>${blog.description || ''}</p>
-          <div>${blog.body}</div>
-          <p><small>By: ${blog.author?.first_name || ''} ${blog.author?.last_name || ''}</small></p>
-          ${isOwner ? '<div><a href="/blogs/'+id+'/edit">Edit</a> | <button id="publishBtn">Publish</button> | <button id="deleteBtn">Delete</button></div>' : ''}
+          <p class="muted">${blog.description || ''}</p>
+          <div class="blog-meta">
+            <span>By ${blog.author?.first_name || ''} ${blog.author?.last_name || ''}</span>
+            <span>${new Date(blog.timestamp).toLocaleString()}</span>
+            <span>${blog.reading_time || 'Quick read'}</span>
+            <span>${blog.read_count || 0} reads</span>
+            <span>${blog.state}</span>
+          </div>
+          ${tags ? `<div class="tags" style="margin:10px 0">${tags}</div>` : ''}
+          <pre class="article-body">${blog.body || ''}</pre>
+          ${isOwner ? `
+            <div class="toolbar" style="margin-top:14px">
+              <a class="btn ghost" href="/blogs/${id}/edit">Edit</a>
+              <button id="stateBtn" class="btn secondary">${blog.state === 'draft' ? 'Publish' : 'Move to Draft'}</button>
+              <button id="deleteBtn" class="btn danger">Delete</button>
+            </div>
+          ` : ''}
         `;
 
+        const relatedContainer = document.getElementById('related');
+        if (!data.relatedBlogs || !data.relatedBlogs.length) {
+          relatedContainer.innerHTML = '<p class="muted">No related blogs found.</p>';
+        } else {
+          relatedContainer.innerHTML = data.relatedBlogs.map((relatedBlog) => appUtils.blogCard(relatedBlog, currentUserId)).join('');
+        }
+
         if (isOwner) {
-          document.getElementById('publishBtn').addEventListener('click', async () => {
+          document.getElementById('stateBtn').addEventListener('click', async () => {
+            const nextState = blog.state === 'draft' ? 'published' : 'draft';
             try {
-              const resp = await fetch('/api/blogs/' + id + '/state', { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ state: 'published' }) });
-              if (!resp.ok) throw new Error('Failed to publish');
-              alert('Published');
-              location.reload();
-            } catch (e) { alert(e.message); }
+              const stateRes = await fetch(`/api/blogs/${id}/state`, {
+                method: 'PATCH',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ state: nextState })
+              });
+              const stateData = await stateRes.json();
+              if (!stateRes.ok) throw new Error(stateData.message || 'Failed to update blog state');
+              appUtils.showMessage('msg', stateData.message || 'Blog state updated', 'success');
+              load();
+            } catch (error) {
+              appUtils.showMessage('msg', error.message, 'error');
+            }
           });
 
           document.getElementById('deleteBtn').addEventListener('click', async () => {
-            if (!confirm('Delete this blog?')) return;
+            if (!window.confirm('Delete this blog permanently?')) return;
             try {
-              const resp = await fetch('/api/blogs/' + id, { method: 'DELETE', credentials: 'include' });
-              if (!resp.ok) throw new Error('Failed to delete');
-              alert('Deleted');
-              location.href = '/blogs';
-            } catch (e) { alert(e.message); }
+              const deleteRes = await fetch(`/api/blogs/${id}`, { method: 'DELETE', credentials: 'include' });
+              if (!deleteRes.ok) {
+                const deleteData = await deleteRes.json();
+                throw new Error(deleteData.message || 'Failed to delete blog');
+              }
+              window.location.href = '/blogs/my-blogs';
+            } catch (error) {
+              appUtils.showMessage('msg', error.message, 'error');
+            }
           });
         }
-      } catch (err) {
-        document.getElementById('blog').textContent = err.message;
+      } catch (error) {
+        appUtils.showMessage('msg', error.message, 'error');
+        document.getElementById('blog').innerHTML = `<p class="muted">${error.message}</p>`;
       }
     }
+
     load();
   </script>
 </body>

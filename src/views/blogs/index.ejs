@@ -3,60 +3,190 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Blogs</title>
+  <title>Published Blogs</title>
   <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-  <div class="container">
-    <div class="topbar">
-      <h1 class="title">Published Blogs</h1>
-      <nav>
-        <a href="/">Home</a>
-        <a href="/blogs/new">Create new</a>
-        <a href="/blogs/my-blogs">My blogs</a>
-        <button style="margin-left:12px" onclick="logout()">Logout</button>
+  <div class="container shell">
+    <header class="topbar">
+      <div>
+        <h1 class="title">Published Blogs</h1>
+        <p class="subtitle">Discover trending stories and search content fast.</p>
+      </div>
+      <nav class="nav">
+        <a class="btn ghost" href="/">Home</a>
+        <a class="btn ghost" href="/blogs/my-blogs">My Blogs</a>
+        <a class="btn" href="/blogs/new">Create Blog</a>
+        <% if (currentUser) { %>
+          <button class="btn secondary" onclick="appUtils.logout()">Logout</button>
+        <% } else { %>
+          <a class="btn secondary" href="/signin">Sign In</a>
+        <% } %>
       </nav>
-    </div>
+    </header>
 
-    <section id="blogs" class="blog-list">Loading...</section>
+    <section class="stats" id="globalStats">
+      <div class="stat"><p class="muted">Total</p><p class="value" id="statTotal">-</p></div>
+      <div class="stat"><p class="muted">Published</p><p class="value" id="statPublished">-</p></div>
+      <div class="stat"><p class="muted">Drafts</p><p class="value" id="statDraft">-</p></div>
+      <div class="stat"><p class="muted">Top Tags</p><p class="value" id="statTags">-</p></div>
+    </section>
 
+    <section class="grid">
+      <article class="card col-8">
+        <h3>Find Blogs</h3>
+        <form id="filters">
+          <div class="row">
+            <label>Keyword
+              <input type="text" name="q" placeholder="Search title, body, tags...">
+            </label>
+            <label>Author
+              <input type="text" name="author" placeholder="Author name or email">
+            </label>
+          </div>
+          <div class="row">
+            <label>Tags (comma separated)
+              <input type="text" name="tags" placeholder="nodejs, api, mongodb">
+            </label>
+            <label>Title
+              <input type="text" name="title" placeholder="Exact title match contains">
+            </label>
+          </div>
+          <div class="row">
+            <label>Sort by
+              <select name="orderBy">
+                <option value="timestamp">Newest</option>
+                <option value="read_count">Most Read</option>
+                <option value="reading_time">Reading Time</option>
+              </select>
+            </label>
+            <label>Order
+              <select name="order">
+                <option value="desc">Descending</option>
+                <option value="asc">Ascending</option>
+              </select>
+            </label>
+            <label>Page size
+              <select name="limit">
+                <option value="10">10</option>
+                <option value="20" selected>20</option>
+                <option value="30">30</option>
+              </select>
+            </label>
+          </div>
+          <div class="toolbar">
+            <button type="submit">Apply Filters</button>
+            <button type="button" class="btn ghost" id="resetFilters">Reset</button>
+          </div>
+        </form>
+      </article>
+
+      <article class="card col-4">
+        <h3>Trending</h3>
+        <div id="trending" class="blog-list"></div>
+      </article>
+    </section>
+
+    <section class="card">
+      <h3>Latest Blogs</h3>
+      <div id="blogs" class="blog-list">Loading blogs...</div>
+      <div id="pager" class="pager" style="display:none">
+        <button class="btn ghost" id="prevPage">Previous</button>
+        <p class="muted" id="pageText"></p>
+        <button class="btn ghost" id="nextPage">Next</button>
+      </div>
+      <p id="msg"></p>
+    </section>
+  </div>
+
+  <script src="/static/js/app.js"></script>
   <script>
-    async function load() {
+    const currentUserId = "<%= currentUser ? currentUser.id : '' %>";
+    let currentPage = 1;
+    let pagination = null;
+
+    async function loadHighlights() {
       try {
-  const res = await fetch('/api/blogs', { credentials: 'include' });
-        if (!res.ok) throw new Error('Failed to load blogs');
-        const data = await res.json();
-        const container = document.getElementById('blogs');
-        if (!data.blogs || data.blogs.length === 0) {
-          container.innerHTML = '<p>No published blogs found.</p>';
+        const response = await fetch('/api/blogs/highlights', { credentials: 'include' });
+        if (!response.ok) throw new Error('Failed to load highlights');
+        const data = await response.json();
+
+        document.getElementById('statTotal').textContent = data.stats.totalCount;
+        document.getElementById('statPublished').textContent = data.stats.publishedCount;
+        document.getElementById('statDraft').textContent = data.stats.draftCount;
+        document.getElementById('statTags').textContent = data.topTags.length;
+
+        const trending = document.getElementById('trending');
+        if (!data.trendingBlogs.length) {
+          trending.innerHTML = '<p class="muted">No trending blogs yet.</p>';
           return;
         }
-        // expose current user id from server-side (available via viewAuth middleware)
-  const currentUserId = "<%= currentUser ? currentUser.id : '' %>";
-        container.innerHTML = data.blogs.map(b => {
-          const authorId = b.author && (b.author._id || b.author.id || '');
-          const isOwner = currentUserId && authorId && String(currentUserId) === String(authorId);
-          return `
-          <article>
-            <h2><a href="/blogs/${b._id}">${b.title}</a></h2>
-            <p>${b.description || ''}</p>
-            <small>By: ${b.author?.first_name || ''} ${b.author?.last_name || ''} — ${new Date(b.timestamp).toLocaleString()}</small>
-            ${isOwner ? `<div><a href="/blogs/${b._id}/edit">Edit</a></div>` : ''}
+
+        trending.innerHTML = data.trendingBlogs.map((blog) => `
+          <article class="blog-item">
+            <h4><a href="/blogs/${blog._id}">${blog.title}</a></h4>
+            <div class="blog-meta"><span>${blog.read_count} reads</span><span>${blog.reading_time || 'Quick read'}</span></div>
           </article>
-          `;
-        }).join('');
-      } catch (err) {
-        document.getElementById('blogs').textContent = err.message;
+        `).join('');
+      } catch (error) {
+        appUtils.showMessage('msg', error.message, 'warning');
       }
     }
-    load();
-  </script>
-  <script>
-    async function logout(){
-      try{ await fetch('/api/auth/logout', { method: 'GET', credentials: 'include' }); }catch(e){}
-      localStorage.removeItem('token');
-      location.href = '/';
+
+    async function loadBlogs(page) {
+      try {
+        appUtils.clearMessage('msg');
+        const formData = new FormData(document.getElementById('filters'));
+        const query = new URLSearchParams();
+        query.set('page', String(page));
+
+        for (const [key, value] of formData.entries()) {
+          if (value) query.set(key, value);
+        }
+
+        const response = await fetch(`/api/blogs?${query.toString()}`, { credentials: 'include' });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Failed to load blogs');
+
+        pagination = data.pagination;
+        currentPage = data.pagination.currentPage;
+
+        const blogsContainer = document.getElementById('blogs');
+        if (!data.blogs.length) {
+          blogsContainer.innerHTML = '<p class="muted">No blogs match the selected filters.</p>';
+        } else {
+          blogsContainer.innerHTML = data.blogs.map((blog) => appUtils.blogCard(blog, currentUserId)).join('');
+        }
+
+        document.getElementById('pager').style.display = 'flex';
+        document.getElementById('pageText').textContent = `Page ${data.pagination.currentPage} of ${data.pagination.totalPages || 1}`;
+        document.getElementById('prevPage').disabled = !data.pagination.hasPrevPage;
+        document.getElementById('nextPage').disabled = !data.pagination.hasNextPage;
+      } catch (error) {
+        appUtils.showMessage('msg', error.message, 'error');
+      }
     }
+
+    document.getElementById('filters').addEventListener('submit', (event) => {
+      event.preventDefault();
+      loadBlogs(1);
+    });
+
+    document.getElementById('resetFilters').addEventListener('click', () => {
+      document.getElementById('filters').reset();
+      loadBlogs(1);
+    });
+
+    document.getElementById('prevPage').addEventListener('click', () => {
+      if (pagination && pagination.hasPrevPage) loadBlogs(currentPage - 1);
+    });
+
+    document.getElementById('nextPage').addEventListener('click', () => {
+      if (pagination && pagination.hasNextPage) loadBlogs(currentPage + 1);
+    });
+
+    loadHighlights();
+    loadBlogs(1);
   </script>
 </body>
 </html>

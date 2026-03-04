@@ -1,57 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Signin Page</title>
-  </head>
-  <body>
-    <link rel="stylesheet" href="/static/css/styles.css">
-    <div class="container">
-      <form id="signinForm" action="/api/auth/signin" method="post" class="card">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+  <div class="container auth-box shell">
+    <header class="topbar">
+      <h1 class="title">Welcome Back</h1>
+      <a class="btn ghost" href="/">Home</a>
+    </header>
+
+    <form id="signinForm" action="/api/auth/signin" method="post">
       <label>Email
-        <input type="email" name="email" placeholder="Email" required />
+        <input type="email" name="email" placeholder="you@example.com" required />
       </label>
       <label>Password
-        <input type="password" name="password" placeholder="Password" required />
+        <input type="password" name="password" placeholder="••••••••" required />
       </label>
-      <div style="margin-top:12px">
-        <button type="submit">Login</button>
-        <a href="/signup" style="margin-left:12px">Signup</a>
+      <div class="toolbar">
+        <button type="submit">Sign In</button>
+        <a class="btn secondary" href="/signup">Create Account</a>
       </div>
-      <p id="msg" style="color:red"></p>
+      <p id="msg"></p>
     </form>
-
-  </form>
   </div>
-  <script>
-      // client-side signin: submit via fetch, store token in cookie & localStorage
-      document.getElementById('signinForm').addEventListener('submit', async e => {
-        e.preventDefault();
-        const form = e.target;
-        const email = form.email.value.trim();
-        const password = form.password.value;
-        if (!email || !password) {
-          document.getElementById('msg').textContent = 'Email and password are required';
-          return;
-        }
 
-        try {
-          const res = await fetch(form.action, {
-              method: 'POST',
-              credentials: 'include',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email, password })
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || 'Signin failed');
-            // server-set httpOnly cookie contains token; no localStorage token storage
-            location.href = '/blogs';
-        } catch (err) {
-          document.getElementById('msg').textContent = err.message;
-        }
-      });
-    </script>
-  </body>
+  <script src="/static/js/app.js"></script>
+  <script>
+    document.getElementById('signinForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const form = event.target;
+      const email = form.email.value.trim();
+      const password = form.password.value;
+
+      if (!email || !password) {
+        appUtils.showMessage('msg', 'Email and password are required', 'error');
+        return;
+      }
+
+      try {
+        appUtils.clearMessage('msg');
+        const response = await fetch(form.action, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Sign in failed');
+        window.location.href = '/blogs';
+      } catch (error) {
+        appUtils.showMessage('msg', error.message, 'error');
+      }
+    });
+  </script>
+</body>
 </html>

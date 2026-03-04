@@ -1,34 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-        <meta charset="UTF-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Home Page</title>
-        <link rel="stylesheet" href="/static/css/styles.css">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blogging API - Home</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-    <div class="container">
-        <div class="card">
-            <h1 class="title">Welcome to the Blog!</h1>
-            <nav>
-                <a href="/signin">Sign in</a> |
-                <a href="/signup">Sign up</a> |
-                <a href="/blogs">Browse blogs</a>
-                             <button onclick="logout()">Logout</button>
+    <div class="container shell">
+        <header class="topbar">
+            <div>
+                <h1 class="title">Blogging API</h1>
+                <p class="subtitle">Create, publish, discover and manage articles with modern tools.</p>
+            </div>
+            <nav class="nav">
+                <a class="btn ghost" href="/blogs">Explore Blogs</a>
+                <% if (currentUser) { %>
+                    <a class="btn ghost" href="/blogs/my-blogs">My Dashboard</a>
+                    <button type="button" class="btn secondary" onclick="appUtils.logout()">Logout</button>
+                <% } else { %>
+                    <a class="btn" href="/signin">Sign In</a>
+                    <a class="btn secondary" href="/signup">Sign Up</a>
+                <% } %>
             </nav>
-        </div>
+        </header>
+
+        <section class="hero">
+            <h1>Write better. Read smarter. Manage everything in one place.</h1>
+            <p class="muted">Use advanced search and sorting, track your drafts vs published stories, and update your posts with clean authoring workflows.</p>
+            <div class="toolbar">
+                <a class="btn" href="/blogs">Browse Published Blogs</a>
+                <% if (currentUser) { %>
+                    <a class="btn secondary" href="/blogs/new">Create New Blog</a>
+                <% } else { %>
+                    <a class="btn secondary" href="/signup">Create Free Account</a>
+                <% } %>
+            </div>
+        </section>
+
+        <section class="grid">
+            <article class="card col-4">
+                <h3>Discovery</h3>
+                <p class="muted">Search by keyword, author, title, tags, or popularity and navigate pages quickly.</p>
+            </article>
+            <article class="card col-4">
+                <h3>Creator Workflow</h3>
+                <p class="muted">Draft and publish with one click, edit anytime, and keep your content organized.</p>
+            </article>
+            <article class="card col-4">
+                <h3>Insights</h3>
+                <p class="muted">View trending stories, newest posts, top tags, and personal blog statistics.</p>
+            </article>
+        </section>
     </div>
-    <script>
-        async function logout() {
-            try {
-                await fetch('/api/auth/logout', { method: 'GET', credentials: 'include' });
-            } catch (e) {
-                // ignore
-            }
-            localStorage.removeItem('token');
-            location.href = '/';
-        }
-    </script>
+    <script src="/static/js/app.js"></script>
 </body>
 </html>

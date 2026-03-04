@@ -7,48 +7,75 @@
   <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-  <div class="container">
-    <a href="/blogs">Back</a>
-    <h1>Create a new blog</h1>
+  <div class="container shell">
+    <header class="topbar">
+      <div>
+        <h1 class="title">Create Blog</h1>
+        <p class="subtitle">Start with a draft or publish immediately.</p>
+      </div>
+      <nav class="nav">
+        <a class="btn ghost" href="/blogs">Published Blogs</a>
+        <a class="btn ghost" href="/blogs/my-blogs">My Blogs</a>
+      </nav>
+    </header>
+
     <form id="create" class="card">
-    <p>Title</p>
-    <input name="title" required />
-    <p>Description</p>
-    <input name="description" />
-    <p>Tags (comma separated)</p>
-    <input name="tags" />
-    <p>Body</p>
-    <textarea name="body" required></textarea>
-    <br />
-    <button type="submit">Create</button>
-  </form>
-    <div id="msg"></div>
+      <label>Title
+        <input name="title" maxlength="120" required />
+      </label>
+      <label>Description
+        <input name="description" maxlength="240" />
+      </label>
+      <div class="row">
+        <label>Tags (comma separated)
+          <input name="tags" placeholder="javascript, node, backend" />
+        </label>
+        <label>Initial State
+          <select name="state">
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+          </select>
+        </label>
+      </div>
+      <label>Body
+        <textarea name="body" required></textarea>
+      </label>
+
+      <div class="toolbar">
+        <button type="submit">Create Blog</button>
+        <a class="btn secondary" href="/blogs/my-blogs">Cancel</a>
+      </div>
+      <p id="msg"></p>
+    </form>
   </div>
 
+  <script src="/static/js/app.js"></script>
   <script>
-    document.getElementById('create').addEventListener('submit', async e => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
+    document.getElementById('create').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const fd = new FormData(event.target);
       const payload = {
         title: fd.get('title'),
         description: fd.get('description'),
         tags: fd.get('tags') ? fd.get('tags').split(',').map(s=>s.trim()) : [],
-        body: fd.get('body')
+        body: fd.get('body'),
+        state: fd.get('state')
       };
 
       try {
-          const res = await fetch('/api/blogs', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
+        appUtils.clearMessage('msg');
+        const res = await fetch('/api/blogs', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Failed');
-        document.getElementById('msg').textContent = 'Created: ' + data.blog._id;
+        appUtils.showMessage('msg', 'Blog created successfully. Redirecting...', 'success');
         location.href = '/blogs/' + data.blog._id;
       } catch (err) {
-        document.getElementById('msg').textContent = err.message;
+        appUtils.showMessage('msg', err.message, 'error');
       }
     });
   </script>

@@ -1,73 +1,112 @@
-# Blogging API
+# Blogging API (Upgraded)
 
-This is a Blogging API built with Node.js and MongoDB. The API allows users to create, manage, and read blog articles. It supports user authentication and provides endpoints for both logged-in and non-logged-in users.
+A full-stack blogging application built with Node.js, Express, MongoDB, EJS, and JWT-based authentication.
 
-## Features
+The project now includes a major UI refresh and expanded functionality for discovery, content management, and analytics.
 
-- User authentication with JWT
-- Create, read, update, and delete blog articles
-- Support for blog states: draft and published
-- Pagination and filtering for blog listings
-- Search functionality by author, title, and tags
-- Reading time calculation for blog articles
+## What’s New
+
+### Massive UI Upgrade
+- Modern responsive design system (cards, dashboards, badges, toolbar actions, status messages)
+- Improved authentication pages and home page
+- Rebuilt blog views for:
+  - public discovery
+  - blog detail + related posts
+  - create/edit workflows
+  - author dashboard with quick actions
+
+### Massive Functionality Upgrade
+- Advanced published blog filtering:
+  - keyword (`q`) across title/description/body/tags
+  - author, title, tags filters
+  - sorting and order controls
+  - pagination controls
+- New highlights API endpoint:
+  - trending blogs
+  - latest blogs
+  - top tags
+  - global stats
+- Blog details now include `relatedBlogs`
+- Blog creation now supports initial `state` (`draft` or `published`)
+- Better tag normalization for create/update operations
+- Added `npm run dev` for local development with nodemon
+
+## Tech Stack
+- Node.js + Express
+- MongoDB + Mongoose
+- EJS templates
+- JWT authentication (httpOnly cookie support)
+- Jest + Supertest
 
 ## Requirements
-
-- Node.js
+- Node.js 18+
 - MongoDB
 
-## Installation
+## Setup
 
-1. Clone the repository:
-   ```
-   git clone <repository-url>
-   ```
-
-2. Navigate to the project directory:
-   ```
-   cd blog-api
-   ```
-
-3. Install the dependencies:
-   ```
+1. Clone repository
+2. Install dependencies:
+   ```bash
    npm install
    ```
-
-4. Create a `.env` file in the root directory and add your environment variables:
-   ```
+3. Create `.env` in project root:
+   ```env
    MONGODB_URI=<your_mongodb_connection_string>
    JWT_SECRET=<your_jwt_secret>
+   PORT=5000
+   NODE_ENV=development
+   ```
+4. Start in development mode:
+   ```bash
+   npm run dev
    ```
 
-5. Start the application:
-   ```
-   npm start
-   ```
+## Scripts
+- `npm run dev` - Start with nodemon
+- `npm start` - Start with node
+- `npm test` - Run test suite
 
 ## API Endpoints
 
 ### Authentication
-
-- **POST /api/auth/signup**: Register a new user
-- **POST /api/auth/signin**: Sign in an existing user
+- `POST /api/auth/signup` - Register user
+- `POST /api/auth/signin` - Login user
+- `GET /api/auth/logout` - Logout user
+- `GET /api/auth/me` - Current authenticated user
 
 ### Blogs
+- `GET /api/blogs` - List published blogs with filtering/pagination
+  - Query params:
+    - `page`, `limit`
+    - `author`, `title`, `tags`
+    - `q` (keyword search)
+    - `orderBy` (`timestamp`, `read_count`, `reading_time`)
+    - `order` (`asc`, `desc`)
+- `GET /api/blogs/highlights` - Trending/latest/top-tags/global stats
+- `GET /api/blogs/:id` - Get a blog, increment reads, include `relatedBlogs`
+- `POST /api/blogs` - Create blog (auth required)
+- `GET /api/blogs/my-blogs` - Get current user blogs + summary (auth required)
+- `PUT /api/blogs/:id` - Update blog (owner only)
+- `PATCH /api/blogs/:id/state` - Toggle draft/published (owner only)
+- `DELETE /api/blogs/:id` - Delete blog (owner only)
 
-- **GET /api/blogs**: Get a list of published blogs (paginated)
-- **GET /api/blogs/:id**: Get a single blog by ID
-- **POST /api/blogs**: Create a new blog (draft state)
-- **PUT /api/blogs/:id/publish**: Publish a blog
-- **PUT /api/blogs/:id**: Update a blog (draft or published state)
-- **DELETE /api/blogs/:id**: Delete a blog
-- **GET /api/users/:id/blogs**: Get a list of blogs by a specific user (paginated and filterable)
+## Web Pages
+- `/` - Landing page
+- `/signin` - Sign in
+- `/signup` - Sign up
+- `/blogs` - Public blog listing with filters and highlights
+- `/blogs/new` - Create blog
+- `/blogs/my-blogs` - Author dashboard
+- `/blogs/:id` - Blog details + related posts
+- `/blogs/:id/edit` - Edit blog
 
 ## Testing
+Run:
 
-To run tests for the API, use the following command:
-```
+```bash
 npm test
 ```
 
 ## License
 
-This project is licensed under the MIT License.
+ISC

@@ -11,6 +11,7 @@ router.get('/my-blogs', authMiddleware, blogController.getMyBlogs);
 
 // Public routes (no authentication required)
 router.get('/', blogController.getPublishedBlogs); // This now supports pagination, search, and ordering
+router.get('/highlights', blogController.getBlogHighlights);
 router.get('/:id', blogController.getBlogById);
 
 // Owner-only routes (authentication + ownership required)
