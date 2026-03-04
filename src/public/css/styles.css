@@ -1,0 +1,16 @@
+:root{
+  --bg:#f7f7fb; --card:#fff; --muted:#666; --accent:#2b6cb0;
+}
+body{font-family:Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:#222;margin:0}
+.container{max-width:960px;margin:28px auto;padding:0 16px}
+.card{background:var(--card);border:1px solid #e6e6ef;border-radius:6px;padding:16px;margin:12px 0}
+nav a{color:var(--accent);text-decoration:none;margin-right:12px}
+form{background:var(--card);padding:16px;border-radius:6px;border:1px solid #e6e6ef}
+label{display:block;margin:8px 0;color:var(--muted)}
+input[type=text],input[type=email],input[type=password],textarea{width:100%;padding:8px;border:1px solid #ddd;border-radius:4px}
+button{background:var(--accent);color:#fff;border:none;padding:8px 12px;border-radius:4px;cursor:pointer}
+button.secondary{background:#6b7280}
+.muted{color:var(--muted);font-size:0.9rem}
+.blog-list article{border-bottom:1px solid #f0f0f6;padding:12px 0}
+.topbar{display:flex;justify-content:space-between;align-items:center}
+.title{margin:0 0 12px}
