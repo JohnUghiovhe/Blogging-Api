@@ -299,6 +299,20 @@ button.ghost {
   margin: 28px auto;
 }
 
+.password-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.password-control input {
+  flex: 1;
+}
+
+.password-toggle {
+  min-width: 74px;
+}
+
 .hero {
   background: linear-gradient(130deg, #eef3ff 0%, #f8fbff 50%, #ffffff 100%);
   border: 1px solid var(--line);

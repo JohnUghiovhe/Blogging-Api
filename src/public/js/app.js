@@ -1,4 +1,23 @@
 window.appUtils = {
+  initPasswordToggles() {
+    const toggleButtons = document.querySelectorAll('[data-password-toggle]');
+    toggleButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const targetId = button.getAttribute('data-target');
+        if (!targetId) return;
+
+        const input = document.getElementById(targetId);
+        if (!input) return;
+
+        const showing = input.type === 'text';
+        input.type = showing ? 'password' : 'text';
+        button.textContent = showing ? 'Show' : 'Hide';
+        button.setAttribute('aria-pressed', showing ? 'false' : 'true');
+        button.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+      });
+    });
+  },
+
   showMessage(targetId, message, type) {
     const el = document.getElementById(targetId);
     if (!el) return;

@@ -8,7 +8,7 @@ const index = (req, res) => {
 
 const signUp = async (req, res) => {
     try {
-        const { first_name, last_name, email, password } = req.body;
+        const { first_name, last_name, email, phone, password } = req.body;
 
         // Check if user already exists
         const existingUser = await User.findOne({ email });
@@ -24,6 +24,7 @@ const signUp = async (req, res) => {
             first_name,
             last_name,
             email,
+            phone,
             password: hashedPassword
         });
 
@@ -50,7 +51,8 @@ const signUp = async (req, res) => {
                 id: user._id,
                 first_name: user.first_name,
                 last_name: user.last_name,
-                email: user.email
+                email: user.email,
+                phone: user.phone
             }
         });
     } catch (error) {

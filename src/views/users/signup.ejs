@@ -25,7 +25,19 @@
         <input type="email" name="email" placeholder="john@example.com" required />
       </label>
       <label>Password
-        <input type="password" name="password" placeholder="At least 6 characters" minlength="6" required />
+        <div class="password-control">
+          <input id="signup-password" type="password" name="password" placeholder="At least 6 characters" minlength="6" required />
+          <button
+            type="button"
+            class="btn ghost password-toggle"
+            data-password-toggle
+            data-target="signup-password"
+            aria-label="Show password"
+            aria-pressed="false"
+          >
+            Show
+          </button>
+        </div>
       </label>
       <div class="toolbar">
         <button type="submit">Sign Up</button>
@@ -37,6 +49,8 @@
 
   <script src="/static/js/app.js"></script>
   <script>
+    appUtils.initPasswordToggles();
+
     document.getElementById('signupForm').addEventListener('submit', async (event) => {
       event.preventDefault();
       const form = event.target;
