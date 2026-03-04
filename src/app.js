@@ -5,6 +5,8 @@ const authRoutes = require('./routes/authRoutes');
 const blogRoutes = require('./routes/blogRoutes');
 const errorHandler = require('./middleware/errorHandler');
 const cookieParser = require('cookie-parser');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swagger');
 const viewAuth = require('./middleware/viewAuth');
 const connectDB = require('./config/db');
 require('dotenv').config();
@@ -43,6 +45,7 @@ app.use('/static', express.static(path.join(__dirname, 'public')));
 // Routes (Controller)
 app.use('/api/auth', authRoutes);
 app.use('/api/blogs', blogRoutes);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Pages (Views)
 app.get('/', (req, res) => res.render('users/index'));

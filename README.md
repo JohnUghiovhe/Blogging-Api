@@ -56,6 +56,12 @@ The project includes a major UI refresh and expanded functionality for discovery
 
 ## API Endpoints
 
+## API Docs
+- Swagger UI is available at `GET /api-docs`
+- Start the app with `npm run dev` (or `npm start`) and open:
+  - `http://localhost:5000/api-docs`
+- The documentation includes request/response payloads for auth and blog endpoints.
+
 ### Authentication
 - `POST /api/auth/signup` - Register user
 - `POST /api/auth/signin` - Login user
