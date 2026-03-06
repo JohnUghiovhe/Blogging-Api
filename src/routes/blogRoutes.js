@@ -280,7 +280,7 @@ router.get('/highlights', blogController.getBlogHighlights);
  * @swagger
  * /api/blogs/{id}:
  *   get:
- *     summary: Get a single published blog by id
+ *     summary: Get a single blog by id (published for public, drafts for owner)
  *     tags: [Blogs]
  *     parameters:
  *       - in: path

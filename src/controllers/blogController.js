@@ -177,19 +177,30 @@ exports.getBlogById = async (req, res) => {
         const { id } = req.params;
 
         const blog = await Blog.findById(id).populate('author', 'first_name last_name email');
-        if (!blog || blog.state === 'draft') {
+        if (!blog) {
             return res.status(404).json({ message: 'Blog not found' });
         }
 
-        blog.read_count += 1;
-        await blog.save();
+        // Drafts are private. Only the owner can fetch them.
+        const requestUserId = (req.user && req.user.id) || (res.locals && res.locals.currentUser && res.locals.currentUser.id);
+        const authorId = blog.author && blog.author._id ? blog.author._id : blog.author;
+        const isOwner = Boolean(requestUserId && authorId && String(requestUserId) === String(authorId));
+
+        if (blog.state === 'draft' && !isOwner) {
+            return res.status(404).json({ message: 'Blog not found' });
+        }
+
+        // Only public reads should increment read_count.
+        if (blog.state === 'published') {
+            blog.read_count += 1;
+            await blog.save();
+        }
 
         const relatedConditions = [];
         if (Array.isArray(blog.tags) && blog.tags.length > 0) {
             relatedConditions.push({ tags: { $in: blog.tags } });
         }
 
-        const authorId = blog.author && blog.author._id ? blog.author._id : blog.author;
         if (authorId) {
             relatedConditions.push({ author: authorId });
         }
