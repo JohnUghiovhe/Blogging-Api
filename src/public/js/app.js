@@ -1,4 +1,55 @@
 window.appUtils = {
+  THEME_STORAGE_KEY: 'jay_blog_theme',
+
+  getPreferredTheme() {
+    const storedTheme = window.localStorage.getItem(this.THEME_STORAGE_KEY);
+    if (storedTheme === 'dark' || storedTheme === 'light') {
+      return storedTheme;
+    }
+
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return prefersDark ? 'dark' : 'light';
+  },
+
+  applyTheme(theme) {
+    const safeTheme = theme === 'dark' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', safeTheme);
+    this.updateThemeToggleLabel(safeTheme);
+  },
+
+  updateThemeToggleLabel(theme) {
+    const button = document.getElementById('themeToggle');
+    if (!button) return;
+
+    const isDark = theme === 'dark';
+    button.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+    button.setAttribute('aria-label', isDark ? 'Switch to light theme' : 'Switch to dark theme');
+    button.textContent = isDark ? 'Light Theme' : 'Dark Theme';
+  },
+
+  initThemeToggle() {
+    this.applyTheme(this.getPreferredTheme());
+
+    if (document.getElementById('themeToggle')) {
+      return;
+    }
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.id = 'themeToggle';
+    button.className = 'theme-toggle';
+
+    button.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+      const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      window.localStorage.setItem(this.THEME_STORAGE_KEY, nextTheme);
+      this.applyTheme(nextTheme);
+    });
+
+    document.body.appendChild(button);
+    this.updateThemeToggleLabel(document.documentElement.getAttribute('data-theme'));
+  },
+
   initPasswordToggles() {
     const toggleButtons = document.querySelectorAll('[data-password-toggle]');
     toggleButtons.forEach((button) => {
@@ -63,3 +114,7 @@ window.appUtils = {
     `;
   }
 };
+
+document.addEventListener('DOMContentLoaded', () => {
+  window.appUtils.initThemeToggle();
+});
