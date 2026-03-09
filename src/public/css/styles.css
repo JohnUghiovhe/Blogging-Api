@@ -608,8 +608,8 @@ body.theme-blogs {
 }
 
 body.theme-blogs .topbar {
-  border-color: #cde8df;
-  background: linear-gradient(120deg, rgba(255, 255, 255, 0.96), rgba(236, 251, 245, 0.9));
+  border-color: #ffffff;
+  background: linear-gradient(120deg, rgba(213, 236, 224, 0.96), rgba(188, 238, 218, 0.9));
 }
 
 body.theme-blogs .btn {
@@ -645,7 +645,7 @@ body.theme-dashboard {
 
 body.theme-dashboard .topbar {
   border-color: #f2dcc0;
-  background: linear-gradient(120deg, rgba(255, 255, 255, 0.96), rgba(255, 246, 228, 0.9));
+  background: linear-gradient(120deg, rgba(247, 247, 247, 0.96), rgba(255, 246, 228, 0.9));
 }
 
 body.theme-dashboard .btn {
@@ -733,8 +733,8 @@ html[data-theme='dark'] {
   --bg-soft: #0f1a1f;
   --bg-elev: rgba(17, 28, 34, 0.9);
   --line: #2a3a42;
-  --text: #dbe9ee;
-  --muted: #9cb2bb;
+  --text: #e4eff3;
+  --muted: #a7bcc5;
   --primary: #34b8a7;
   --primary-strong: #66d6c7;
   --primary-soft: #17353a;
@@ -772,7 +772,7 @@ html[data-theme='dark'] input[type='password'],
 html[data-theme='dark'] input[type='number'],
 html[data-theme='dark'] select,
 html[data-theme='dark'] textarea {
-  background: rgba(13, 23, 28, 0.92);
+  background: rgba(15, 25, 31, 0.92);
   border-color: #33464f;
   color: var(--text);
 }
@@ -783,6 +783,44 @@ html[data-theme='dark'] textarea:focus {
   border-color: #3ea89c;
   box-shadow: 0 0 0 3px rgba(52, 184, 167, 0.2);
   background: #112027;
+}
+
+html[data-theme='dark'] input::placeholder,
+html[data-theme='dark'] textarea::placeholder {
+  color: #88a0aa;
+}
+
+html[data-theme='dark'] .card,
+html[data-theme='dark'] form,
+html[data-theme='dark'] .stat,
+html[data-theme='dark'] .topbar,
+html[data-theme='dark'] .hero,
+html[data-theme='dark'] .blog-item {
+  color: var(--text);
+}
+
+html[data-theme='dark'] .title,
+html[data-theme='dark'] h1,
+html[data-theme='dark'] h2,
+html[data-theme='dark'] h3,
+html[data-theme='dark'] h4,
+html[data-theme='dark'] label,
+html[data-theme='dark'] p,
+html[data-theme='dark'] span,
+html[data-theme='dark'] li,
+html[data-theme='dark'] pre {
+  color: inherit;
+}
+
+html[data-theme='dark'] body.theme-auth .topbar,
+html[data-theme='dark'] body.theme-dashboard .topbar,
+html[data-theme='dark'] body.theme-blogs .topbar {
+  background: var(--bg-elev);
+  border-color: var(--line);
+}
+
+html[data-theme='dark'] .stats .stat {
+  background: linear-gradient(160deg, #17353a 0%, #0f766e 100%);
 }
 
 html[data-theme='dark'] .blog-item {
