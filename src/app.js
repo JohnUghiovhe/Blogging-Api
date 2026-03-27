@@ -17,14 +17,14 @@ process.on('unhandledRejection', (reason, p) => {
 });
 process.on('uncaughtException', (err) => {
     console.error('Uncaught Exception thrown:', err && err.stack ? err.stack : err);
-    // exit after logging so that the supervising process (nodemon) can restart
-    process.exit(1);
 });
 
 const app = express();
 
 // Connect to MongoDB (Model)
-connectDB();
+connectDB().catch((error) => {
+    console.error('Initial DB connection failed:', error && error.stack ? error.stack : error);
+});
 
 // Middleware
 
@@ -76,10 +76,13 @@ app.get('/blogs/:id', (req, res) => {
 // Error handling (View for errors)
 app.use(errorHandler);
 
-// Start the server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+// Start the server only when run directly (local dev/runtime).
+// In serverless environments (e.g. Vercel), export the app without binding to a port.
+if (require.main === module) {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+    });
+}
 
 module.exports = app;
