@@ -4,8 +4,8 @@
   "description": "A blogging API that allows users to create, read, update, and delete blog posts with authentication.",
   "main": "src/app.js",
   "scripts": {
-    "start": "node src/app.js",
-    "dev": "nodemon src/app.js",
+    "start": "node api.js && node src/app.js",
+    "dev": "node api.js && nodemon src/app.js",
     "test": "jest"
   },
   "dependencies": {
